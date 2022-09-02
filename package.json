@@ -1,6 +1,6 @@
 {
   "name": "@jazdid/contract-ui",
-  "version": "3.4.2",
+  "version": "1.0.0",
   "description": "UI components and reusable code",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
