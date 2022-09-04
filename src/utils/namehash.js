@@ -25,6 +25,6 @@ export function namehash(inputName) {
       node = sha3(new Buffer(node + labelSha, 'hex'))
     }
   }
-
+  
   return '0x' + node
 }

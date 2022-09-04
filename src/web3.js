@@ -38,11 +38,6 @@ export async function setupWeb3({
     provider = getJsonRpcProvider(customProvider)
     return { provider, signer: undefined }
   }
-
-  if (provider) {
-    return { provider, signer }
-  }
-
   if (customProvider) {
     if (typeof customProvider === 'string') {
       // handle raw RPC endpoint URL
@@ -58,10 +53,16 @@ export async function setupWeb3({
       signer = provider.getSigner()
     } else {
       // handle EIP 1193 provider
-      provider = getWeb3Provider(customProvider)
+      // provider = getWeb3Provider(customProvider)
+      provider = customProvider;
+      signer= provider.getSigner()
     }
     return { provider, signer }
   }
+  if (provider) {
+    return { provider, signer }
+  }
+
 
   // If the window is in an iframe, return the iframe provider IFF the iframe provider can be enabled
   if (window && window.parent && window.self && window.self !== window.parent) {

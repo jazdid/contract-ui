@@ -2,7 +2,7 @@
   "name": "@jazdid/contract-ui",
   "version": "1.0.0",
   "description": "UI components and reusable code",
-  "main": "./dist/index.js",
+  "main": "./src/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"

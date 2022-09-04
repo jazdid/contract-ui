@@ -1,5 +1,6 @@
 import { utils } from 'ethers'
 import { interfaces } from './constants/interfaces'
+import { addresses } from './constants/contractsAddress'
 import {
   getBulkRenewalContract,
   getDeedContract,
@@ -695,32 +696,39 @@ export default class Registrar {
 }
 
 async function getEthResolver(ENS) {
-  const resolverAddr = await ENS.resolver(namehash('eth'))
-  const provider = await getProvider()
+  console.log(namehash('bnb'),'namehash')
+  const resolverAddr = await ENS.resolver(namehash('bnb'))
+  const provider = await getProvider();
+  console.log(provider,'pppppx')
   return getResolverContract({ address: resolverAddr, provider })
 }
 
 export async function setupRegistrar(registryAddress) {
   const provider = await getProvider()
   const ENS = getENSContract({ address: registryAddress, provider })
+  console.log(ENS,'ENSContract')
   const Resolver = await getEthResolver(ENS)
+  console.log(Resolver,'resolver')
+  let ethAddress = await ENS.owner(namehash('bnb'))
 
-  let ethAddress = await ENS.owner(namehash('eth'))
+  console.log( JSON.stringify(Resolver.interfaceImplementer),'interface')
 
-  let controllerAddress = await Resolver.interfaceImplementer(
-    namehash('eth'),
-    permanentRegistrarInterfaceId
-  )
-  let legacyAuctionRegistrarAddress = await Resolver.interfaceImplementer(
-    namehash('eth'),
-    legacyRegistrarInterfaceId
-  )
+  // let controllerAddress = await Resolver.interfaceImplementer(
+  //   namehash('bnb'),
+  //   permanentRegistrarInterfaceId
+  // )
+  let controllerAddress = addresses.controllerAddress;
+  // let legacyAuctionRegistrarAddress = await Resolver.interfaceImplementer(
+  //   namehash('bnb'),
+  //   legacyRegistrarInterfaceId
+  // )
+  let legacyAuctionRegistrarAddress = addresses.controllerAddress;
+  let bulkRenewalAddress = addresses.controllerAddress;
 
-  let bulkRenewalAddress = await Resolver.interfaceImplementer(
-    namehash('eth'),
-    bulkRenewalInterfaceId
-  )
-
+  // let bulkRenewalAddress = await Resolver.interfaceImplementer(
+  //   namehash('bnb'),
+  //   bulkRenewalInterfaceId
+  // )
   return new Registrar({
     registryAddress,
     legacyAuctionRegistrarAddress,
