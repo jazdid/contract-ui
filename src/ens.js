@@ -26,6 +26,7 @@ import { interfaces } from './constants/interfaces'
 import { registryAddress, addresses } from './constants/contractsAddress'
 import PublicResolverABI from './abis/PublicResolver.json';
 import RegistrarABI from './abis/UniversalRegistry.json';
+import BaseRegistrarABI from './abis/BaseRegistrar.json';
 
 /* Utils */
 
@@ -104,6 +105,11 @@ export class ENS {
     return registrar;
   }
 
+  async _getBnbRegistrarContract(signerOrProvider) {
+    const registrar = new ethers.Contract(addresses.bnbRegistrar, BaseRegistrarABI.abi, signerOrProvider);
+    return registrar;
+  }
+
   // TODO: ethers.js does not support ttl
   async getTTL(name) {
     const namehash = getNamehash(name)
@@ -124,6 +130,32 @@ export class ENS {
 
   async getAddress(name) {
     return this.getAddr(name, 'ETH')
+  }
+
+  async getRegistrantList(owner) {
+    const provider = await getProvider()
+    const bnbRegistrarInstance = await this._getBnbRegistrarContract(provider);
+    if(!bnbRegistrarInstance) return emptyAddress
+    let tokens = [];
+    let list = [];
+    const balance = await bnbRegistrarInstance.balanceOf(owner);
+    for (let i = 0; i < balance.toNumber(); i++) {
+      tokens.push(await bnbRegistrarInstance.tokenOfOwnerByIndex(owner, i));
+    }
+
+    for (let i = 0; i < tokens.length; i++) {
+      let name = await bnbRegistrarInstance.nameOf(tokens[i]);
+      let tld = await bnbRegistrarInstance.tld();
+      let expire = await bnbRegistrarInstance.nameExpires(tokens[i]);
+      list.push({
+        name: name + '.' + tld,
+        registrar: 'bnb',
+        chain: 'BNB',
+        expires: expire.toNumber()
+      });
+    }
+
+    return list
   }
 
   async getAddr(name, key) {
