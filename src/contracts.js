@@ -11,6 +11,8 @@ import {
   AggregatorInterface as oracleContract
 } from '@ensdomains/ens-contracts'
 
+import RegistrarControllerAbi from './constants/abis/RegistrarController.json'
+
 import { abi as oldResolverContract } from '@ensdomains/contracts/abis/ens-022/PublicResolver.json'
 import { abi as dnsRegistrarContractOld } from '@ensdomains/contracts/abis/dnsregistrar/DNSRegistrar.json'
 import { abi as legacyAuctionRegistrarContract } from '@ensdomains/contracts/abis/ens/HashRegistrar'
@@ -49,7 +51,7 @@ function getPermanentRegistrarContract({ address, provider }) {
 }
 
 function getPermanentRegistrarControllerContract({ address, provider }) {
-  return new Contract(address, permanentRegistrarControllerContract, provider)
+  return new Contract(address, RegistrarControllerAbi.abi, provider)
 }
 
 function getDeedContract({ address, provider }) {
@@ -64,7 +66,7 @@ function getBulkRenewalContract({ address, provider }) {
   return new Contract(address, bulkRenewalContract, provider)
 }
 
-function getOracleContract({address, provider}){
+function getOracleContract({ address, provider }) {
   return new Contract(address, oracleContract, provider)
 }
 

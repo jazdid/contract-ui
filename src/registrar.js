@@ -321,23 +321,31 @@ export default class Registrar {
     return price
   }
 
-  async getRentPriceAndPremium(name, duration, block="latest") {
+  async getRentPriceAndPremium(name, duration, block = 'latest') {
     const permanentRegistrarController = this.permanentRegistrarController
-    let price = await permanentRegistrarController.rentPrice(name, duration, {blockTag:block} )
-    let premium = await permanentRegistrarController.rentPrice(name, 0, {blockTag:block} )
+    let price = await permanentRegistrarController.rentPrice(name, duration, {
+      blockTag: block
+    })
+    let premium = await permanentRegistrarController.rentPrice(name, 0, {
+      blockTag: block
+    })
     return {
-      price, premium
+      price,
+      premium
     }
   }
 
   async getEthPrice() {
     const oracleens = 'eth-usd.data.eth'
-    try{
+    try {
       const contractAddress = await this.getAddress(oracleens)
       const oracle = await this.getOracle(contractAddress)
       return (await oracle.latestAnswer()).toNumber() / 100000000
-    }catch(e){
-      console.warn(`Either ${oracleens} does not exist or Oracle is not throwing an error`, e)
+    } catch (e) {
+      console.warn(
+        `Either ${oracleens} does not exist or Oracle is not throwing an error`,
+        e
+      )
     }
   }
 
@@ -696,34 +704,31 @@ export default class Registrar {
 }
 
 async function getEthResolver(ENS) {
-  console.log(namehash('bnb'),'namehash')
+  console.log(namehash('bnb'), 'namehash')
   const resolverAddr = await ENS.resolver(namehash('bnb'))
-  const provider = await getProvider();
-  console.log(provider,'pppppx')
+  const provider = await getProvider()
+  console.log(provider, 'pppppx')
   return getResolverContract({ address: resolverAddr, provider })
 }
 
 export async function setupRegistrar(registryAddress) {
   const provider = await getProvider()
   const ENS = getENSContract({ address: registryAddress, provider })
-  console.log(ENS,'ENSContract')
+  console.log(ENS, 'ENSContract')
   const Resolver = await getEthResolver(ENS)
-  console.log(Resolver,'resolver')
+  console.log(Resolver, 'resolver')
   let ethAddress = await ENS.owner(namehash('bnb'))
-
-  console.log( JSON.stringify(Resolver.interfaceImplementer),'interface')
-
   // let controllerAddress = await Resolver.interfaceImplementer(
   //   namehash('bnb'),
   //   permanentRegistrarInterfaceId
   // )
-  let controllerAddress = addresses.controllerAddress;
+  let controllerAddress = addresses.controllerAddress
   // let legacyAuctionRegistrarAddress = await Resolver.interfaceImplementer(
   //   namehash('bnb'),
   //   legacyRegistrarInterfaceId
   // )
-  let legacyAuctionRegistrarAddress = addresses.controllerAddress;
-  let bulkRenewalAddress = addresses.controllerAddress;
+  let legacyAuctionRegistrarAddress = addresses.controllerAddress
+  let bulkRenewalAddress = addresses.controllerAddress
 
   // let bulkRenewalAddress = await Resolver.interfaceImplementer(
   //   namehash('bnb'),
