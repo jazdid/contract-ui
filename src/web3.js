@@ -54,15 +54,14 @@ export async function setupWeb3({
     } else {
       // handle EIP 1193 provider
       // provider = getWeb3Provider(customProvider)
-      provider = customProvider;
-      signer= provider.getSigner()
+      provider = customProvider
+      signer = provider.getSigner()
     }
     return { provider, signer }
   }
   if (provider) {
     return { provider, signer }
   }
-
 
   // If the window is in an iframe, return the iframe provider IFF the iframe provider can be enabled
   if (window && window.parent && window.self && window.self !== window.parent) {
