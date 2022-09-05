@@ -2,7 +2,7 @@
   "name": "@jazdid/contract-ui",
   "version": "1.0.0",
   "description": "UI components and reusable code",
-  "main": "./src/index.js",
+  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
@@ -10,7 +10,7 @@
   "scripts": {
     "test": "node_modules/.bin/jest --verbose",
     "test:dev": "node_modules/.bin/jest --watch --verbose",
-    "build": "rm -rf dist/* && yarn build:ts && yarn build:babel",
+    "build": "rm -rf dist/* && yarn build:ts && yarn build:babel && cp -r  ./src/abis ./dist/abis",
     "build:ts": "tsc",
     "build:babel": "babel src -d dist --ignore src/**/*.test.js,**/__tests__/**,src/testing-utils",
     "prepublishOnly": "yarn build",
