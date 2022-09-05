@@ -11,7 +11,7 @@ export async function setupENS({
   enforceReload
 } = {}) {
   const { provider } = await setupWeb3({
-    customProvider,
+    customProvider: customProvider.connection.url,
     reloadOnAccountsChange,
     enforceReadOnly,
     enforceReload,

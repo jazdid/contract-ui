@@ -53,9 +53,9 @@ export async function setupWeb3({
       signer = provider.getSigner()
     } else {
       // handle EIP 1193 provider
-      // provider = getWeb3Provider(customProvider)
+      // provider = getWeb3Provider(customProvider.connection.url)
       provider = customProvider
-      signer = provider.getSigner()
+      signer = provider?.getSigner()
     }
     return { provider, signer }
   }
