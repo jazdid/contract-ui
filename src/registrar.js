@@ -84,7 +84,7 @@ export default class Registrar {
     const permanentRegistrarController =
       getPermanentRegistrarControllerContract({
         address: controllerAddress,
-        provider
+        provider: provider
       })
 
     const legacyAuctionRegistrar = getLegacyAuctionContract({
@@ -704,19 +704,23 @@ export default class Registrar {
 }
 
 async function getEthResolver(ENS) {
-  console.log(namehash('bnb'), 'namehash')
+  console.log(ENS, 'ENS')
   const resolverAddr = await ENS.resolver(namehash('bnb'))
   const provider = await getProvider()
-  console.log(provider, 'pppppx')
   return getResolverContract({ address: resolverAddr, provider })
 }
 
 export async function setupRegistrar(registryAddress) {
+  console.log(registryAddress, 'registryAddress')
   const provider = await getProvider()
-  const ENS = getENSContract({ address: registryAddress, provider })
+  // const signer = provider.getSigner()
+  const ENS = getENSContract({
+    address: registryAddress,
+    provider: provider
+  })
   console.log(ENS, 'ENSContract')
-  const Resolver = await getEthResolver(ENS)
-  console.log(Resolver, 'resolver')
+  // const Resolver = await getEthResolver(ENS)
+  // console.log(Resolver, 'resolver')
   let ethAddress = await ENS.owner(namehash('bnb'))
   // let controllerAddress = await Resolver.interfaceImplementer(
   //   namehash('bnb'),
@@ -740,6 +744,6 @@ export async function setupRegistrar(registryAddress) {
     ethAddress,
     controllerAddress,
     bulkRenewalAddress,
-    provider
+    provider: provider
   })
 }

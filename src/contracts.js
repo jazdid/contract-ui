@@ -12,6 +12,7 @@ import {
 } from '@ensdomains/ens-contracts'
 
 import RegistrarControllerAbi from './abis/RegistrarController.json'
+import RegistryAbi from './abis/UniversalRegistry.json'
 
 import { abi as oldResolverContract } from '@ensdomains/contracts/abis/ens-022/PublicResolver.json'
 import { abi as dnsRegistrarContractOld } from '@ensdomains/contracts/abis/dnsregistrar/DNSRegistrar.json'
@@ -31,7 +32,7 @@ function getOldResolverContract({ address, provider }) {
 }
 
 function getENSContract({ address, provider }) {
-  return new Contract(address, ensContract, provider)
+  return new Contract(address, RegistryAbi.abi, provider)
 }
 
 function getTestRegistrarContract({ address, provider }) {
