@@ -1,6 +1,6 @@
 import { formatsByName, formatsByCoinType } from '@ensdomains/address-encoder'
 import { abi as ensContract } from '@ensdomains/contracts/abis/ens/ENS.json'
-import { utils, BigNumber } from 'ethers'
+import { utils, BigNumber, Contract } from 'ethers'
 import {
   getENSContract,
   getResolverContract,
@@ -23,7 +23,8 @@ import {
   getWeb3
 } from './web3'
 import { interfaces } from './constants/interfaces'
-import { registryAddress } from './constants/contractsAddress'
+import { registryAddress, addresses } from './constants/contractsAddress'
+import PublicResolverABI from './abis/PublicResolver.json';
 
 /* Utils */
 
@@ -84,8 +85,14 @@ export class ENS {
   }
 
   async _getResolverObject(name) {
+    // 这里的getResolver 是ethers.js 专门为ens提供的，可以根据域名来获取解析器
     const provider = await getProvider()
     return provider.getResolver(name)
+  }
+
+  async _getResolverContract(signerOrProvider) {
+    const publicResolver = new Contract(addresses.publicResolver, PublicResolverABI, signerOrProvider);
+    return publicResolver;
   }
 
   // TODO: ethers.js does not support ttl
@@ -112,22 +119,29 @@ export class ENS {
 
   async getAddr(name, key) {
     if(!name) return emptyAddress
-    const resolver = await this._getResolverObject(name)
-    if(!resolver) return emptyAddress
-    try {
-      const { coinType, encoder } = formatsByName[key]
-      const encodedCoinType = utils.hexZeroPad(BigNumber.from(coinType).toHexString(), 32)
-      const data = await resolver._fetchBytes('0xf1cb7e06', encodedCoinType)
-      if([emptyAddress, '0x', null].includes(data) ) return emptyAddress
-      let buffer = Buffer.from(data.slice(2), "hex")
-      return encoder(buffer);
-    } catch (e) {
-      console.log(e)
-      console.warn(
-        'Error getting addr on the resolver contract, are you sure the resolver address is a resolver contract?'
-      )
-      return emptyAddress
-    }
+    const provider = await getProvider()
+    const contract = await this._getResolverContract(provider)
+    if(!contract) return emptyAddress
+    const namehash = getNamehash(name)
+    console.log('getAddr Contract result:');
+    console.log(contract.addr);
+    console.log(contract);
+    const result = contract.addr(namehash);
+    console.log(result);
+    // try {
+    //   const { coinType, encoder } = formatsByName[key]
+    //   const encodedCoinType = utils.hexZeroPad(BigNumber.from(coinType).toHexString(), 32)
+    //   const data = await resolver._fetchBytes('0xf1cb7e06', encodedCoinType)
+    //   if([emptyAddress, '0x', null].includes(data) ) return emptyAddress
+    //   let buffer = Buffer.from(data.slice(2), "hex")
+    //   return encoder(buffer);
+    // } catch (e) {
+    //   console.log(e)
+    //   console.warn(
+    //     'Error getting addr on the resolver contract, are you sure the resolver address is a resolver contract?'
+    //   )
+    //   return emptyAddress
+    // }
   }
 
   async getContent(name) {
