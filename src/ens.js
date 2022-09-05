@@ -1,6 +1,6 @@
 import { formatsByName, formatsByCoinType } from '@ensdomains/address-encoder'
 import { abi as ensContract } from '@ensdomains/contracts/abis/ens/ENS.json'
-import { utils, BigNumber, Contract } from 'ethers'
+import { utils, BigNumber, ethers} from 'ethers'
 import {
   getENSContract,
   getResolverContract,
@@ -25,6 +25,7 @@ import {
 import { interfaces } from './constants/interfaces'
 import { registryAddress, addresses } from './constants/contractsAddress'
 import PublicResolverABI from './abis/PublicResolver.json';
+import RegistrarABI from './abis/UniversalRegistry.json';
 
 /* Utils */
 
@@ -56,7 +57,7 @@ export class ENS {
       registryAddress = contracts[networkId].registry
     }
 
-    this.registryAddress = registryAddress
+    this.registryAddress = addresses.registrar
 
     const ENSContract = getENSContract({ address: registryAddress, provider })
     this.ENS = ENSContract
@@ -71,8 +72,11 @@ export class ENS {
 
   // TODO: ethers.js does not support owner
   async getOwner(name) {
+    const provider = await getProvider()
+    const registrarInstance = await this._getRegistrarContract(provider);
+    if(!registrarInstance) return emptyAddress
     const namehash = getNamehash(name)
-    const owner = await this.ENS.owner(namehash)
+    const owner = await registrarInstance.owner(namehash)
     return owner
   }
 
@@ -91,8 +95,13 @@ export class ENS {
   }
 
   async _getResolverContract(signerOrProvider) {
-    const publicResolver = new Contract(addresses.publicResolver, PublicResolverABI, signerOrProvider);
+    const publicResolver = new ethers.Contract(addresses.publicResolver, PublicResolverABI.abi, signerOrProvider);
     return publicResolver;
+  }
+
+  async _getRegistrarContract(signerOrProvider) {
+    const registrar = new ethers.Contract(addresses.registrar, RegistrarABI.abi, signerOrProvider);
+    return registrar;
   }
 
   // TODO: ethers.js does not support ttl
@@ -120,14 +129,10 @@ export class ENS {
   async getAddr(name, key) {
     if(!name) return emptyAddress
     const provider = await getProvider()
-    const contract = await this._getResolverContract(provider)
-    if(!contract) return emptyAddress
+    const publicResolverInstance = await this._getResolverContract(provider);
+    if(!publicResolverInstance) return emptyAddress
     const namehash = getNamehash(name)
-    console.log('getAddr Contract result:');
-    console.log(contract.addr);
-    console.log(contract);
-    const result = contract.addr(namehash);
-    console.log(result);
+    const result = await publicResolverInstance.addr(namehash);
     // try {
     //   const { coinType, encoder } = formatsByName[key]
     //   const encodedCoinType = utils.hexZeroPad(BigNumber.from(coinType).toHexString(), 32)
@@ -142,49 +147,46 @@ export class ENS {
     //   )
     //   return emptyAddress
     // }
+    return result;
   }
 
   async getContent(name) {
-    const resolver = await this._getResolverObject(name)
-    if (!resolver) {
-      return emptyAddress
-    }
+    const provider = await getProvider()
+    const publicResolverInstance = await this._getResolverContract(provider);
+    if(!publicResolverInstance) return emptyAddress
     try {
       const namehash = getNamehash(name)
-      const provider = await getProvider()
-      const Resolver = getResolverContract({
-        address: resolver.address,
-        provider
-      })
-      const contentHashSignature = utils
-        .solidityKeccak256(['string'], ['contenthash(bytes32)'])
-        .slice(0, 10)
+      const result = await publicResolverInstance.contenthash(namehash);
+      return result
+      // const contentHashSignature = utils
+      //   .solidityKeccak256(['string'], ['contenthash(bytes32)'])
+      //   .slice(0, 10)
 
-      const isContentHashSupported = await Resolver.supportsInterface(
-        contentHashSignature
-      )
-      if (isContentHashSupported) {
-        // use _fetchBytes as ethers.js currently only supports ipfs
-        const encoded = await resolver._fetchBytes('0xbc1c58d1')
-        const { protocolType, decoded, error } = decodeContenthash(encoded)
+      // const isContentHashSupported = await Resolver.supportsInterface(
+      //   contentHashSignature
+      // )
+      // if (isContentHashSupported) {
+      //   // use _fetchBytes as ethers.js currently only supports ipfs
+      //   const encoded = await resolver._fetchBytes('0xbc1c58d1')
+      //   const { protocolType, decoded, error } = decodeContenthash(encoded)
 
-        if (error) {
-          return {
-            value: error,
-            contentType: 'error'
-          }
-        }
-        return {
-          value: `${protocolType}://${decoded}`,
-          contentType: 'contenthash'
-        }
-      } else {
-        const value = await Resolver.content(namehash)
-        return {
-          value,
-          contentType: 'oldcontent'
-        }
-      }
+      //   if (error) {
+      //     return {
+      //       value: error,
+      //       contentType: 'error'
+      //     }
+      //   }
+      //   return {
+      //     value: `${protocolType}://${decoded}`,
+      //     contentType: 'contenthash'
+      //   }
+      // } else {
+      //   const value = await Resolver.content(namehash)
+      //   return {
+      //     value,
+      //     contentType: 'oldcontent'
+      //   }
+      // }
     } catch (e) {
       const message =
         'Error getting content on the resolver contract, are you sure the resolver address is a resolver contract?'
@@ -194,11 +196,13 @@ export class ENS {
   }
 
   async getText(name, key) {
-    const resolver = await this._getResolverObject(name)
-    if(!resolver) return ''
+    const provider = await getProvider()
+    const publicResolverInstance = await this._getResolverContract(provider);
+    if(!publicResolverInstance) return emptyAddress
+    const namehash = getNamehash(name)
     try {
-      const addr = await resolver.getText(key)
-      return addr
+      const result = await publicResolverInstance.text(namehash, key);
+      return result
     } catch (e) {
       console.warn(
         'Error getting text record on the resolver contract, are you sure the resolver address is a resolver contract?'
@@ -275,7 +279,7 @@ export class ENS {
     const labelhash = getLabelhash(nameArray[0])
     const [owner, resolver] = await Promise.all([
       this.getOwner(name),
-      this.getResolver(name)
+      addresses.publicResolver
     ])
     const node = {
       name,
