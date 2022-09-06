@@ -177,7 +177,7 @@ export class ENS {
       let expire = await bnbRegistrarInstance.nameExpires(tokens[i]);
       list.push({
         name: name + '.' + tld,
-        registrar: 'bnb',
+        registrar: 'Jaz DID',
         chain: 'BNB',
         expires: expire.toNumber()
       });
