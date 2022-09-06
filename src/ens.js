@@ -144,6 +144,34 @@ export class ENS {
     return this.getAddr(name, 'ETH')
   }
 
+  async getExpiryTime(name) {
+    const provider = await getProvider()
+    const bnbRegistrarInstance = await this._getBnbRegistrarContract(provider);
+    if(!bnbRegistrarInstance) return emptyAddress
+    // namehash = token
+    const namehash = getNamehash(name);
+    const expiryTime = await bnbRegistrarInstance.nameExpires(namehash);
+
+    return expiryTime.toNumber();
+  }
+
+  async getBaseInfo(name) {
+    const provider = await getProvider()
+    const bnbRegistrarInstance = await this._getBnbRegistrarContract(provider);
+    const registrarInstance = await this._getRegistrarContract(provider);
+    if(!bnbRegistrarInstance || !registrarInstance) return emptyAddress
+
+    // namehash = token
+    const namehash = getNamehash(name);
+    const expiryTime = await bnbRegistrarInstance.nameExpires(namehash);
+    const owner = await registrarInstance.owner(namehash);
+
+    return {
+      owner,
+      expiryTime: expiryTime.toNumber()
+    }
+  }
+
   async getRegistrantList(owner) {
     const provider = await getProvider()
     const bnbRegistrarInstance = await this._getBnbRegistrarContract(provider)
@@ -161,7 +189,7 @@ export class ENS {
       let expire = await bnbRegistrarInstance.nameExpires(tokens[i])
       list.push({
         name: name + '.' + tld,
-        registrar: 'bnb',
+        registrar: 'Jaz DID',
         chain: 'BNB',
         expires: expire.toNumber()
       })
