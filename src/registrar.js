@@ -710,8 +710,7 @@ async function getEthResolver(ENS) {
   return getResolverContract({ address: resolverAddr, provider })
 }
 
-export async function setupRegistrar(registryAddress) {
-  console.log(registryAddress, 'registryAddress')
+export async function setupRegistrar(registryAddress, networkId) {
   const provider = await getProvider()
   // const signer = provider.getSigner()
   const ENS = getENSContract({
@@ -726,13 +725,13 @@ export async function setupRegistrar(registryAddress) {
   //   namehash('bnb'),
   //   permanentRegistrarInterfaceId
   // )
-  let controllerAddress = addresses.controllerAddress
+  let controllerAddress = addresses[networkId].controllerAddress
   // let legacyAuctionRegistrarAddress = await Resolver.interfaceImplementer(
   //   namehash('bnb'),
   //   legacyRegistrarInterfaceId
   // )
-  let legacyAuctionRegistrarAddress = addresses.controllerAddress
-  let bulkRenewalAddress = addresses.controllerAddress
+  let legacyAuctionRegistrarAddress = addresses[networkId].controllerAddress
+  let bulkRenewalAddress = addresses[networkId].controllerAddress
 
   // let bulkRenewalAddress = await Resolver.interfaceImplementer(
   //   namehash('bnb'),

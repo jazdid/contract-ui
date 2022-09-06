@@ -1,6 +1,6 @@
 import { formatsByName, formatsByCoinType } from '@ensdomains/address-encoder'
 import { abi as ensContract } from '@ensdomains/contracts/abis/ens/ENS.json'
-import { utils, BigNumber, ethers} from 'ethers'
+import { utils, BigNumber, ethers } from 'ethers'
 import {
   getENSContract,
   getResolverContract,
@@ -24,9 +24,9 @@ import {
 } from './web3'
 import { interfaces } from './constants/interfaces'
 import { registryAddress, addresses } from './constants/contractsAddress'
-import PublicResolverABI from './abis/PublicResolver.json';
-import RegistrarABI from './abis/UniversalRegistry.json';
-import BaseRegistrarABI from './abis/BaseRegistrar.json';
+import PublicResolverABI from './abis/PublicResolver.json'
+import RegistrarABI from './abis/UniversalRegistry.json'
+import BaseRegistrarABI from './abis/BaseRegistrar.json'
 
 /* Utils */
 
@@ -43,7 +43,7 @@ function getLabelhash(label) {
   return labelhash(label)
 }
 
-const contracts = registryAddress;
+const contracts = registryAddress
 
 export class ENS {
   constructor({ networkId, registryAddress, provider }) {
@@ -57,8 +57,8 @@ export class ENS {
     } else if (this.contracts[networkId] && !registryAddress) {
       registryAddress = contracts[networkId].registry
     }
-
-    this.registryAddress = addresses.registrar
+    this.networkId = networkId
+    this.registryAddress = addresses[networkId].registrar
 
     const ENSContract = getENSContract({ address: registryAddress, provider })
     this.ENS = ENSContract
@@ -74,8 +74,8 @@ export class ENS {
   // TODO: ethers.js does not support owner
   async getOwner(name) {
     const provider = await getProvider()
-    const registrarInstance = await this._getRegistrarContract(provider);
-    if(!registrarInstance) return emptyAddress
+    const registrarInstance = await this._getRegistrarContract(provider)
+    if (!registrarInstance) return emptyAddress
     const namehash = getNamehash(name)
     const owner = await registrarInstance.owner(namehash)
     return owner
@@ -84,7 +84,7 @@ export class ENS {
   async getResolver(name) {
     const provider = await getProvider()
     let resolver = await provider.getResolver(name)
-    if(resolver){
+    if (resolver) {
       return resolver.address
     }
   }
@@ -96,18 +96,30 @@ export class ENS {
   }
 
   async _getResolverContract(signerOrProvider) {
-    const publicResolver = new ethers.Contract(addresses.publicResolver, PublicResolverABI.abi, signerOrProvider);
-    return publicResolver;
+    const publicResolver = new ethers.Contract(
+      addresses[this.networkId].publicResolver,
+      PublicResolverABI.abi,
+      signerOrProvider
+    )
+    return publicResolver
   }
 
   async _getRegistrarContract(signerOrProvider) {
-    const registrar = new ethers.Contract(addresses.registrar, RegistrarABI.abi, signerOrProvider);
-    return registrar;
+    const registrar = new ethers.Contract(
+      addresses[this.networkId].registrar,
+      RegistrarABI.abi,
+      signerOrProvider
+    )
+    return registrar
   }
 
   async _getBnbRegistrarContract(signerOrProvider) {
-    const registrar = new ethers.Contract(addresses.bnbRegistrar, BaseRegistrarABI.abi, signerOrProvider);
-    return registrar;
+    const registrar = new ethers.Contract(
+      addresses[this.networkId].bnbRegistrar,
+      BaseRegistrarABI.abi,
+      signerOrProvider
+    )
+    return registrar
   }
 
   // TODO: ethers.js does not support ttl
@@ -134,37 +146,37 @@ export class ENS {
 
   async getRegistrantList(owner) {
     const provider = await getProvider()
-    const bnbRegistrarInstance = await this._getBnbRegistrarContract(provider);
-    if(!bnbRegistrarInstance) return emptyAddress
-    let tokens = [];
-    let list = [];
-    const balance = await bnbRegistrarInstance.balanceOf(owner);
+    const bnbRegistrarInstance = await this._getBnbRegistrarContract(provider)
+    if (!bnbRegistrarInstance) return emptyAddress
+    let tokens = []
+    let list = []
+    const balance = await bnbRegistrarInstance.balanceOf(owner)
     for (let i = 0; i < balance.toNumber(); i++) {
-      tokens.push(await bnbRegistrarInstance.tokenOfOwnerByIndex(owner, i));
+      tokens.push(await bnbRegistrarInstance.tokenOfOwnerByIndex(owner, i))
     }
 
     for (let i = 0; i < tokens.length; i++) {
-      let name = await bnbRegistrarInstance.nameOf(tokens[i]);
-      let tld = await bnbRegistrarInstance.tld();
-      let expire = await bnbRegistrarInstance.nameExpires(tokens[i]);
+      let name = await bnbRegistrarInstance.nameOf(tokens[i])
+      let tld = await bnbRegistrarInstance.tld()
+      let expire = await bnbRegistrarInstance.nameExpires(tokens[i])
       list.push({
         name: name + '.' + tld,
         registrar: 'bnb',
         chain: 'BNB',
         expires: expire.toNumber()
-      });
+      })
     }
 
     return list
   }
 
   async getAddr(name, key) {
-    if(!name) return emptyAddress
+    if (!name) return emptyAddress
     const provider = await getProvider()
-    const publicResolverInstance = await this._getResolverContract(provider);
-    if(!publicResolverInstance) return emptyAddress
+    const publicResolverInstance = await this._getResolverContract(provider)
+    if (!publicResolverInstance) return emptyAddress
     const namehash = getNamehash(name)
-    const result = await publicResolverInstance.addr(namehash);
+    const result = await publicResolverInstance.addr(namehash)
     // try {
     //   const { coinType, encoder } = formatsByName[key]
     //   const encodedCoinType = utils.hexZeroPad(BigNumber.from(coinType).toHexString(), 32)
@@ -179,16 +191,16 @@ export class ENS {
     //   )
     //   return emptyAddress
     // }
-    return result;
+    return result
   }
 
   async getContent(name) {
     const provider = await getProvider()
-    const publicResolverInstance = await this._getResolverContract(provider);
-    if(!publicResolverInstance) return emptyAddress
+    const publicResolverInstance = await this._getResolverContract(provider)
+    if (!publicResolverInstance) return emptyAddress
     try {
       const namehash = getNamehash(name)
-      const result = await publicResolverInstance.contenthash(namehash);
+      const result = await publicResolverInstance.contenthash(namehash)
       return result
       // const contentHashSignature = utils
       //   .solidityKeccak256(['string'], ['contenthash(bytes32)'])
@@ -229,11 +241,11 @@ export class ENS {
 
   async getText(name, key) {
     const provider = await getProvider()
-    const publicResolverInstance = await this._getResolverContract(provider);
-    if(!publicResolverInstance) return emptyAddress
+    const publicResolverInstance = await this._getResolverContract(provider)
+    if (!publicResolverInstance) return emptyAddress
     const namehash = getNamehash(name)
     try {
-      const result = await publicResolverInstance.text(namehash, key);
+      const result = await publicResolverInstance.text(namehash, key)
       return result
     } catch (e) {
       console.warn(
@@ -311,7 +323,7 @@ export class ENS {
     const labelhash = getLabelhash(nameArray[0])
     const [owner, resolver] = await Promise.all([
       this.getOwner(name),
-      addresses.publicResolver
+      addresses[this.networkId].publicResolver
     ])
     const node = {
       name,
@@ -538,7 +550,7 @@ export class ENS {
     let namehash = getNamehash(reverseNode)
     return Resolver.setName(namehash, name)
   }
-  async supportsWildcard(name){
+  async supportsWildcard(name) {
     const provider = await getProvider()
     const resolverAddress = await this.getResolver(name)
     const Resolver = getResolverContract({
